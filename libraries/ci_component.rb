@@ -21,7 +21,7 @@ require File.expand_path('../ci_server', __FILE__)
 class Chef
   class Resource::CiComponent < Resource::LWRPBase
     include Poise
-    poise_subresource(Resource::CiServer)
+    poise_subresource(CiServer)
     self.resource_name = :ci_component
     default_action(:enable)
     actions(:disable)

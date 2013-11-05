@@ -24,16 +24,27 @@ class Chef
     default_action(:install)
     actions(:uninstall, :restart, :wait_until_up, :rebuild_config)
 
+    attribute(:server_role, kind_of: String, default: lazy { node['ci']['server_role'] })
+
     def component(name, &block)
-      method_missing(:"component_#{name}", "#{self.name}::#{name}", &block)
+      method_missing(:"component_#{name}", name, &block)
     rescue NameError
-      method_missing(:component, "#{self.name}::#{name}", &block)
+      method_missing(:component, name, &block)
+    end
+
+    def after_created
+      super
+      action(:nothing) unless is_server?
     end
 
     private
 
     def sub_resource_name(method_symbol)
       :"ci_#{method_symbol}"
+    end
+
+    def is_server?
+      node['roles'].include?(server_role)
     end
 
   end

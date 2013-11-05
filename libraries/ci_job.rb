@@ -16,110 +16,119 @@
 # limitations under the License.
 #
 
+require File.expand_path('../ci_server', __FILE__)
+
 class Chef
-  class Resource
-    class CiJob < LWRPBase
-      self.resource_name = :ci_job
-      default_action(:create)
-      actions(:remove)
+  class Resource::CiJob < Resource::LWRPBase
+    include Poise
+    poise_subresource(CiServer)
+    self.resource_name = :ci_job
+    default_action(:enable)
+    actions(:disable)
 
-      attribute(:repository, kind_of: String)
-      attribute(:job_source, kind_of: String, default: 'job-config.xml.erb')
-      attribute(:job_cookbook, kind_of: [String, Symbol], default: 'ci')
-      attribute(:server_role, kind_of: String)
-      attribute(:builder_role, kind_of: String)
-      attribute(:builder_recipe, kind_of: String)
-      attribute(:builder_remove_recipe, kind_of: String)
+    attribute(:job_name, kind_of: String, default: lazy { name.split('::').last })
+    attribute(:source, kind_of: String)
+    attribute(:cookbook, kind_of: [String, Symbol])
+    attribute(:content, kind_of: String)
 
-      def after_create
-        unless self.repository
-          if node['ci']['repository_template']
-            self.repository(node['ci']['repository_template'] % self.name)
-          else
-            raise Exceptions::ValidationFailed, 'Required argument repository is missing!'
-          end
-        end
-        self.server_role(self.node['ci']['server_role']) unless self.server_role
-        self.builder_role(self.node['ci']['builder_role_template'] % self.name) unless self.builder_role
-        self.builder_recipe(self.node['ci']['builder_recipe_template'] % self.name) unless self.builder_recipe
-        self.builder_remove_recipe(self.node['ci']['builder_remove_recipe_template'] % self.name) if !self.builder_recipe and self.node['ci']['builder_remove_recipe_template']
+    attribute(:repository, kind_of: String, default: lazy { node['ci']['repository'] })
+    attribute(:server_role, kind_of: String, default: lazy { parent.server_role || node['ci']['server_role'] })
+    attribute(:builder_role, kind_of: String, default: lazy { node['ci']['builder_role'] })
+    attribute(:builder_recipe, kind_of: String, default: lazy { node['ci']['builder_recipe'] })
+
+    def after_created
+      super
+      raise "#{self}: Only one of source or content can be specified" if source && content
+      raise Exceptions::ValidationFailed, 'Required argument repository is missing!' unless repository
+
+      # If source is given, the default cookbook should be the current one
+      cookbook(source ? cookbook_name : 'ci')
+      # If neither source nor content are given, fill in a default
+      source('job-config.xml.erb') if !source && !content
+
+      # Interpolate the job name into a few attributes to make life easier
+      %w{repository server_role builder_role builder_recipe}.each do |key|
+        val = send(key)
+        send(key, val % {name: job_name}) if val
       end
+    end
 
-      def is_server?
-        self.node['roles'].include?(self.server_role)
+    def provider_for_action(action)
+      provider_class = if is_server?
+        Provider::CiJob::Server
+      elsif is_builder?
+        Provider::CiJob::Builder
+      else
+        Provider::CiJob
       end
+      provider = provider_class.new(self, run_context)
+      provider.action = action
+      provider
+    end
 
-      def is_builder?
-        self.node['roles'].include?(self.builder_role)
-      end
+    private
 
-      def provider_for_action(action)
-        provider_class = if self.is_server?
-          Provider::CiJob::Server
-        elsif self.is_builder?
-          Provider::CiJob::Builder
-        else
-          Provider::CiJob
-        end
-        provider = provider_class.new(self, self.run_context)
-        provider.action = action
-        provider
-      end
+    def is_server?
+      node['roles'].include?(server_role)
+    end
+
+    def is_builder?
+      node['roles'].include?(builder_role)
     end
   end
 
-  class Provider
-    class CiJob < LWRPBase
-      def whyrun_supported?
-        true
-      end
+  class Provider::CiJob < Provider::LWRPBase
+    include Poise
 
-      def action_create
-      end
+    def whyrun_supported?
+      true
+    end
 
-      def action_remove
-      end
+    # These spaces left intentionally blank
+    def action_enable
+    end
 
-      class Server < CiJob
-        def load_current_resource
-          @jenkins_job = Chef::Resource::JekninsJob.new(self.new_resource.name, self.run_context)
-          @jenkins_job.action(:nothing)
-          @jenkins_job.config(::File.join(node['jenkins']['node']['home'], "#{self.new_resource.name}-config.xml"))
+    def action_disable
+    end
 
-          @template = Chef::Resource::Template.new(@jenkins_job.config, self.run_context)
-          @template.source(self.new_source.job_source)
-          @template.cookbook(self.new_source.job_source)
-          @template.owner('root')
-          @template.group('root')
-          @template.mode('644')
-          @template.notifies(:update, @jenkins_job, :immediately)
+    class Server < CiJob
+      def action_enable
+        notifying_block do
+          enable_job
         end
+      end
 
-        def action_create
-          @template.run_action(:create)
-          if @template.updated? || @jenkins_job.updated?
-            new_resource.updated_by_last_action(true)
+      def action_disable
+        notifying_block do
+          disable_job
+        end
+      end
+
+      private
+
+      def enable_job
+        jenkins_job new_resource.name do
+          source new_resource.source
+          cookbook new_resource.cookbook
+          content new_resource.content
+          parent new_resource.parent
+          options do
+            repository new_resource.repository
           end
         end
-
-        def action_remove
-          @template.run_action(:delete)
-          @jenkins_job.run_action(:delete)
-          if @template.updated? || @jenkins_job.updated?
-            new_resource.updated_by_last_action(true)
-          end
-        end
       end
 
-      class Builder < CiJob
-        def action_create
-          self.run_context.include_recipe(self.new_resource.builder_recipe)
-        end
+      def disable_job
+        r = enable_job
+        r.action(:disable)
+        r
+      end
 
-        def action_remove
-          raise 'No removal recipe specified' unless self.new_resource.builder_remove_recipe
-          self.run_context.include_recipe(self.new_resource.builder_remove_recipe)
-        end
+    end
+
+    class Builder < CiJob
+      def action_enable
+        include_recipe(new_resource.builder_recipe)
       end
     end
   end

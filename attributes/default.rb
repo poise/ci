@@ -17,21 +17,16 @@
 #
 
 # Template for the repository for a specific job. Unset by default.
-#   The %s will be replaced with the job name
-default['ci']['repository_template'] = nil
+#   The %{name} will be replaced with the job name
+default['ci']['repository'] = nil
 
 # Role to use to find the Jenkins server.
 default['ci']['server_role'] = 'ci-server'
 
 # Template for the role to find the builder for a specific job.
-#   The %s will be replaced with the job name
-default['ci']['builder_role_template'] = 'ci-node-%s'
+#   The %{name} will be replaced with the job name
+default['ci']['builder_role'] = 'ci-node-%{name}'
 
 # Template for the recipe used to prepare a builder for a specific job.
-#   The %s will be replaced with the job name
-default['ci']['builder_recipe_template'] = 'ci-app::%s'
-
-# Template for the recipe used to uninstall a builder for a specific job. It is
-# not set by default, which disallows uninstalling builders.
-#   The %s will be replaced with the job name
-default['ci']['builder_remove_recipe_template'] = nil
+#   The %{name} will be replaced with the job name
+default['ci']['builder_recipe'] = 'ci-app::%{name}'
