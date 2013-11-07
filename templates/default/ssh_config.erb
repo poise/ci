@@ -1,0 +1,7 @@
+<% @keys.sort.reverse!.each do |hostname, keys| -%>
+Host <%= hostname %>
+    IdentitiesOnly yes
+    <%- keys.each do |key| -%>
+    IdentityFile <%= key.path %>
+    <%- end -%>
+<% end -%>

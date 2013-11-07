@@ -22,9 +22,10 @@ class Chef
 
     # TODO: FIX REQUIRED COPY PASTA OF THESE
     default_action(:install)
-    actions(:uninstall, :restart, :wait_until_up, :rebuild_config)
+    actions(:uninstall, :restart, :wait_until_up, :rebuild_config, :rebuild_ssh_config)
 
     attribute(:server_role, kind_of: String, default: lazy { node['ci']['server_role'] })
+    attribute(:known_hosts, kind_of: String, default: lazy { node['ci']['known_hosts'] })
 
     def component(name, &block)
       method_missing(:"component_#{name}", name, &block)
@@ -50,5 +51,50 @@ class Chef
   end
 
   class Provider::CiServer < Provider::Jenkins
+
+    def action_rebuild_ssh_config
+      converge_by('generate Jenkins ssh config') do
+        notifying_block do
+          create_ssh_config
+        end
+      end
+    end
+
+    private
+
+    def create_ssh_dir
+      r = super
+      create_known_hosts
+      create_ssh_config
+      r
+    end
+
+    def create_known_hosts
+      file ::File.join(new_resource.ssh_path, 'known_hosts') do
+        owner new_resource.user
+        group new_resource.ssh_dir_group
+        mode '600'
+        content Array(new_resource.known_hosts).join("\n")
+      end
+    end
+
+    def create_ssh_config
+      # Find all keys and group them by hostname
+      keys = {}
+      new_resource.subresources.each do |r|
+        if r.is_a?(Resource::CiDeployKey)
+          (keys[r.hostname] ||= []) << r
+        end
+      end
+
+      template ::File.join(new_resource.ssh_path, 'config') do
+        source 'ssh_config.erb'
+        cookbook 'ci'
+        owner new_resource.user
+        group new_resource.ssh_dir_group
+        mode '600'
+        variables new_resource: new_resource, keys: keys
+      end
+    end
   end
 end

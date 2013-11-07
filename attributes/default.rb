@@ -25,8 +25,13 @@ default['ci']['server_role'] = 'ci-server'
 
 # Template for the role to find the builder for a specific job.
 #   The %{name} will be replaced with the job name
-default['ci']['builder_role'] = 'ci-node-%{name}'
+default['ci']['builder_role'] = 'ci-builder-%{name}'
 
 # Template for the recipe used to prepare a builder for a specific job.
 #   The %{name} will be replaced with the job name
 default['ci']['builder_recipe'] = 'ci-app::%{name}'
+
+# Default SSH known_hosts for Jenkins.
+# This default value is for github.com as of 2013-11-05.
+# TODO: Query this via DNS.
+default['ci']['known_hosts'] = "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==\n"

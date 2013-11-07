@@ -47,34 +47,12 @@ class Chef
       source('job-config.xml.erb') if !source && !content
 
       # Interpolate the job name into a few attributes to make life easier
-      %w{repository server_role builder_role builder_recipe}.each do |key|
+      %w{repository builder_role builder_recipe}.each do |key|
         val = send(key)
         send(key, val % {name: job_name}) if val
       end
     end
 
-    def provider_for_action(action)
-      provider_class = if is_server?
-        Provider::CiJob::Server
-      elsif is_builder?
-        Provider::CiJob::Builder
-      else
-        Provider::CiJob
-      end
-      provider = provider_class.new(self, run_context)
-      provider.action = action
-      provider
-    end
-
-    private
-
-    def is_server?
-      node['roles'].include?(server_role)
-    end
-
-    def is_builder?
-      node['roles'].include?(builder_role)
-    end
   end
 
   class Provider::CiJob < Provider::LWRPBase
@@ -84,52 +62,58 @@ class Chef
       true
     end
 
-    # These spaces left intentionally blank
     def action_enable
-    end
-
-    def action_disable
-    end
-
-    class Server < CiJob
-      def action_enable
-        notifying_block do
-          enable_job
-        end
-      end
-
-      def action_disable
-        notifying_block do
-          disable_job
-        end
-      end
-
-      private
-
-      def enable_job
-        jenkins_job new_resource.name do
-          source new_resource.source
-          cookbook new_resource.cookbook
-          content new_resource.content
-          parent new_resource.parent
-          options do
-            repository new_resource.repository
+      if is_server?
+        converge_by("create jenkins job #{new_resource.name}") do
+          notifying_block do
+            create_job
           end
         end
       end
-
-      def disable_job
-        r = enable_job
-        r.action(:disable)
-        r
-      end
-
-    end
-
-    class Builder < CiJob
-      def action_enable
-        include_recipe(new_resource.builder_recipe)
+      if is_builder?
+        converge_by("install builder recipe #{new_resource.builder_recipe}") do
+          include_recipe(new_resource.builder_recipe)
+        end
       end
     end
+
+    def action_disable
+      if is_server?
+        converge_by("disable jenkins job #{new_resource.name}") do
+          notifying_block do
+            disable_job
+          end
+        end
+      end
+    end
+
+    private
+
+    def create_job
+      jenkins_job new_resource.name do
+        source new_resource.source
+        cookbook new_resource.cookbook
+        content new_resource.content
+        parent new_resource.parent
+        options do
+          repository new_resource.repository
+        end
+      end
+    end
+
+    def disable_job
+      r = enable_job
+      r.action(:disable)
+      r
+    end
+
+    def is_server?
+      node['roles'].include?(new_resource.server_role)
+    end
+
+    def is_builder?
+      node['roles'].include?(new_resource.builder_role)
+    end
+
   end
 end
