@@ -19,13 +19,15 @@
 require File.expand_path('../ci_component', __FILE__)
 
 class Chef
-  class Resource::CiComponentGit < Resource::CiComponent
+  class Resource::CiComponentGoogleAuth < Resource::CiComponent
+    attribute(:domain, kind_of: String, required: true)
   end
 
-  class Provider::CiComponentGit < Provider::CiComponent
+  class Provider::CiComponentGoogleAuth < Provider::CiComponent
     def install_plugin
-      include_recipe 'git'
-      super
+      jenkins_plugin 'openid' do
+        parent new_resource.parent
+      end
     end
   end
 end

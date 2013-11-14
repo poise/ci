@@ -19,12 +19,9 @@
 require File.expand_path('../ci_server', __FILE__)
 
 class Chef
-  class Resource::CiJob < Resource::LWRPBase
-    include Poise
-    poise_subresource(CiServer)
-    self.resource_name = :ci_job
-    default_action(:enable)
-    actions(:disable)
+  class Resource::CiJob < Resource
+    include Poise(CiServer)
+    actions(:enable, :disable)
 
     attribute(:job_name, kind_of: String, default: lazy { name.split('::').last })
     attribute(:source, kind_of: String)
@@ -55,12 +52,8 @@ class Chef
 
   end
 
-  class Provider::CiJob < Provider::LWRPBase
+  class Provider::CiJob < Provider
     include Poise
-
-    def whyrun_supported?
-      true
-    end
 
     def action_enable
       if is_server?

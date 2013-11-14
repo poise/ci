@@ -19,17 +19,15 @@
 require File.expand_path('../ci_server', __FILE__)
 
 class Chef
-  class Resource::CiComponent < Resource::LWRPBase
-    include Poise
-    poise_subresource(CiServer)
-    self.resource_name = :ci_component
-    default_action(:enable)
-    actions(:disable)
+  class Resource::CiComponent < Resource
+    include Poise(CiServer)
+    actions(:enable, :disable)
 
     attribute(:plugin, kind_of: String, default: lazy { name.split('::').last })
     attribute(:source, kind_of: String)
     attribute(:cookbook, kind_of: [String, Symbol])
     attribute(:content, kind_of: String)
+    attribute(:options, option_collector: true)
 
     def after_created
       super
@@ -41,7 +39,7 @@ class Chef
     end
   end
 
-  class Provider::CiComponent < Provider::LWRPBase
+  class Provider::CiComponent < Provider
     include Poise
 
     def action_enable
@@ -72,6 +70,7 @@ class Chef
         cookbook new_resource.cookbook
         content new_resource.content
         parent new_resource.parent
+        options new_resource.options.merge(component: new_resource)
       end
     end
 

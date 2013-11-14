@@ -19,12 +19,9 @@
 require File.expand_path('../ci_server', __FILE__)
 
 class Chef
-  class Resource::CiDeployKey < Resource::LWRPBase
-    include Poise
-    poise_subresource(CiServer)
-    self.resource_name = :ci_deploy_key
-    default_action(:create)
-    actions(:remove)
+  class Resource::CiDeployKey < Resource
+    include Poise(CiServer)
+    actions(:create, :remove)
 
     attribute(:key, kind_of: String, required: true)
     attribute(:hostname, kind_of: String, default: '*')
@@ -40,7 +37,7 @@ class Chef
 
   end
 
-  class Provider::CiDeployKey < Provider::LWRPBase
+  class Provider::CiDeployKey < Provider
     include Poise
 
     def action_create

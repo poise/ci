@@ -18,11 +18,7 @@
 
 class Chef
   class Resource::CiServer < Resource::Jenkins
-    self.resource_name = :ci_server
-
-    # TODO: FIX REQUIRED COPY PASTA OF THESE
-    default_action(:install)
-    actions(:uninstall, :restart, :wait_until_up, :rebuild_config, :rebuild_ssh_config)
+    actions(:rebuild_ssh_config)
 
     attribute(:server_role, kind_of: String, default: lazy { node['ci']['server_role'] })
     attribute(:known_hosts, kind_of: String, default: lazy { node['ci']['known_hosts'] })
