@@ -20,12 +20,9 @@
 #   The %{name} will be replaced with the job name
 default['ci']['repository'] = nil
 
-# Role to use to find the Jenkins server.
-default['ci']['server_role'] = 'ci-server'
-
-# Template for the role to find the builder for a specific job.
-#   The %{name} will be replaced with the job name
-default['ci']['builder_role'] = 'ci-builder-%{name}'
+default['ci']['is_server'] = false
+default['ci']['is_builder'] = true
+default['ci']['path'] = '/srv/ci'
 
 # Template for the recipe used to prepare a builder for a specific job.
 #   The %{name} will be replaced with the job name

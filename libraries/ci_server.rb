@@ -16,22 +16,17 @@
 # limitations under the License.
 #
 
+require File.expand_path('../ci_deploy_key', __FILE__)
+
 class Chef
   class Resource::CiServer < Resource::Jenkins
-    actions(:rebuild_ssh_config)
-
-    attribute(:server_role, kind_of: String, default: lazy { node['ci']['server_role'] })
-    attribute(:known_hosts, kind_of: String, default: lazy { node['ci']['known_hosts'] })
+    include Ci::SshHelper::Resource
+    attribute(:path, kind_of: String, default: lazy { node['ci']['path'] })
 
     def component(name, &block)
       method_missing(:"component_#{name}", name, &block)
     rescue NameError
       method_missing(:component, name, &block)
-    end
-
-    def after_created
-      super
-      action(:nothing) unless is_server?
     end
 
     private
@@ -40,57 +35,27 @@ class Chef
       :"ci_#{method_symbol}"
     end
 
-    def is_server?
-      node['roles'].include?(server_role)
-    end
-
   end
 
   class Provider::CiServer < Provider::Jenkins
+    include Ci::SshHelper::Provider
 
-    def action_rebuild_ssh_config
-      converge_by('generate Jenkins ssh config') do
-        notifying_block do
-          create_ssh_config
-        end
-      end
+    def action_install
+      # Force server tag to true
+      node.override['ci']['is_server'] = true
+      super
+    end
+
+    def ssh_group
+      new_resource.ssh_dir_group
     end
 
     private
 
     def create_ssh_dir
       r = super
-      create_known_hosts
-      create_ssh_config
+      manage_ssh # Via SshHelper
       r
-    end
-
-    def create_known_hosts
-      file ::File.join(new_resource.ssh_path, 'known_hosts') do
-        owner new_resource.user
-        group new_resource.ssh_dir_group
-        mode '600'
-        content Array(new_resource.known_hosts).join("\n")
-      end
-    end
-
-    def create_ssh_config
-      # Find all keys and group them by hostname
-      keys = {}
-      new_resource.subresources.each do |r|
-        if r.is_a?(Resource::CiDeployKey)
-          (keys[r.hostname] ||= []) << r
-        end
-      end
-
-      template ::File.join(new_resource.ssh_path, 'config') do
-        source 'ssh_config.erb'
-        cookbook 'ci'
-        owner new_resource.user
-        group new_resource.ssh_dir_group
-        mode '600'
-        variables new_resource: new_resource, keys: keys
-      end
     end
   end
 end

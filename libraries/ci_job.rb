@@ -16,22 +16,26 @@
 # limitations under the License.
 #
 
-require File.expand_path('../ci_server', __FILE__)
+require File.expand_path('../ci_deploy_key', __FILE__)
 
 class Chef
   class Resource::CiJob < Resource
-    include Poise(CiServer)
+    include Poise(parent: CiServer, parent_optional: true)
+    include Ci::SshHelper::Resource
     actions(:enable, :disable)
 
     attribute(:job_name, kind_of: String, default: lazy { name.split('::').last })
+    attribute(:path, kind_of: String, default: lazy { node['ci']['path'] })
     attribute(:source, kind_of: String)
     attribute(:cookbook, kind_of: [String, Symbol])
     attribute(:content, kind_of: String)
 
     attribute(:repository, kind_of: String, default: lazy { node['ci']['repository'] })
-    attribute(:server_role, kind_of: String, default: lazy { parent.server_role || node['ci']['server_role'] })
-    attribute(:builder_role, kind_of: String, default: lazy { node['ci']['builder_role'] })
-    attribute(:builder_recipe, kind_of: String, default: lazy { node['ci']['builder_recipe'] })
+    attribute(:server_url, kind_of: String, default: lazy { node['ci']['server_url'] || search_for_server })
+    attribute(:is_builder, equal_to: [true, false], default: lazy { node['ci']['is_builder'] })
+    def builder_recipe(arg=nil, &block)
+      set_or_return(:builder_recipe, arg || block, kind_of: [String, Proc], default: node['ci']['builder_recipe'])
+    end
 
     def after_created
       super
@@ -44,46 +48,70 @@ class Chef
       source('job-config.xml.erb') if !source && !content
 
       # Interpolate the job name into a few attributes to make life easier
-      %w{repository builder_role builder_recipe}.each do |key|
+      %w{repository builder_recipe}.each do |key|
         val = send(key)
-        send(key, val % {name: job_name}) if val
+        send(key, val % {name: job_name}) if val && val.is_a?(String)
       end
+    end
+
+    def search_for_server
+      raise "Please specify a server URL via node['ci']['server_url']" if Chef::Config[:solo]
+      server = partial_search(:node, 'ci__is_server:true', rows: 1, keys: {ip: ['ipaddress'], local_ipv4: ['cloud', 'local_ipv4']}).first
+      raise "Unable to find Jenkins server via search" unless server
+      "http://#{server['local_ipv4'] || server['ip']}:8080/"
     end
 
   end
 
   class Provider::CiJob < Provider
     include Poise
+    include Ci::SshHelper::Provider
 
     def action_enable
-      if is_server?
-        converge_by("create jenkins job #{new_resource.name}") do
+      if new_resource.parent
+        converge_by("create jenkins job #{new_resource.job_name}") do
           notifying_block do
             create_job
           end
         end
       end
-      if is_builder?
-        converge_by("install builder recipe #{new_resource.builder_recipe}") do
-          include_recipe(new_resource.builder_recipe)
+      if new_resource.is_builder
+        converge_by("install builder for #{new_resource.job_name}") do
+          install_builder_recipe
+          create_node
+          create_ssh_dir
+          manage_ssh
         end
       end
     end
 
     def action_disable
-      if is_server?
-        converge_by("disable jenkins job #{new_resource.name}") do
+      if new_resource.parent
+        converge_by("disable jenkins job #{new_resource.job_name}") do
           notifying_block do
             disable_job
           end
         end
       end
+      if new_resource.is_builder
+        converge_by("remove builder for #{new_resource.job_name}") do
+          delete_node
+        end
+      end
+    end
+
+    def ssh_user
+      node['jenkins']['node']['user']
+    end
+
+    def ssh_group
+      node['jenkins']['node']['group']
     end
 
     private
 
     def create_job
-      jenkins_job new_resource.name do
+      jenkins_job new_resource.job_name do
         source new_resource.source
         cookbook new_resource.cookbook
         content new_resource.content
@@ -100,12 +128,30 @@ class Chef
       r
     end
 
-    def is_server?
-      node['roles'].include?(new_resource.server_role)
+    def install_builder_recipe
+      include_recipe(new_resource.builder_recipe)
     end
 
-    def is_builder?
-      node['roles'].include?(new_resource.builder_role)
+    def create_node
+      jenkins_node new_resource.job_name do
+        parent new_resource.parent
+        path new_resource.path
+        server_url new_resource.server_url
+      end
+    end
+
+    def create_ssh_dir
+      directory ::File.join(new_resource.path, '.ssh') do
+        owner node['jenkins']['node']['user']
+        group node['jenkins']['node']['group']
+        mode '700'
+      end
+    end
+
+    def delete_node
+      r = create_node
+      r.action(:delete)
+      r
     end
 
   end
