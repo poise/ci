@@ -2,6 +2,6 @@
 Host <%= hostname %>
     IdentitiesOnly yes
     <%- keys.each do |key| -%>
-    IdentityFile <%= key.path %>
+    IdentityFile <%= File.join(@ssh_base_path, key.name) %>
     <%- end -%>
 <% end -%>

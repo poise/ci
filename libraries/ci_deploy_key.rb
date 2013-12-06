@@ -110,7 +110,7 @@ module Ci
           owner ssh_user
           group ssh_group
           mode '600'
-          variables new_resource: new_resource, keys: keys
+          variables new_resource: new_resource, keys: keys, ssh_base_path: ssh_base_path
         end
       end
     end
