@@ -32,6 +32,8 @@ class Chef
 
     attribute(:repository, kind_of: String, default: lazy { node['ci']['repository'] })
     attribute(:server_url, kind_of: String, default: lazy { node['ci']['server_url'] || search_for_server })
+    attribute(:server_username, kind_of: String, default: lazy { node['ci']['server_username'] })
+    attribute(:server_api_key, kind_of: String, default: lazy { node['ci']['server_api_key'] })
     attribute(:is_builder, equal_to: [true, false], default: lazy { node['ci']['is_builder'] })
     def builder_recipe(arg=nil, &block)
       set_or_return(:builder_recipe, arg || block, kind_of: [String, Proc], default: node['ci']['builder_recipe'])
@@ -137,6 +139,8 @@ class Chef
         parent new_resource.parent
         path new_resource.path
         server_url new_resource.server_url
+        server_username new_resource.server_username
+        server_password new_resource.server_api_key
       end
     end
 

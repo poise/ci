@@ -23,6 +23,8 @@ default['ci']['repository'] = nil
 default['ci']['is_server'] = false
 default['ci']['is_builder'] = true
 default['ci']['path'] = '/srv/ci'
+default['ci']['server_username'] = 'jnlp'
+default['ci']['server_api_key'] = nil
 
 # Template for the recipe used to prepare a builder for a specific job.
 #   The %{name} will be replaced with the job name

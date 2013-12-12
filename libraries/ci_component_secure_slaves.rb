@@ -23,7 +23,7 @@ class Chef
   class Resource::CiComponentSecureSlaves < Resource::CiComponent
     attribute(:master_key, kind_of: String, required: true)
     attribute(:secrets_key, kind_of: String, required: true)
-    attribute(:username, kind_of: String, default: 'jnlp')
+    attribute(:username, kind_of: String, default: lazy { node['ci']['server_username'] })
     attribute(:encrypted_api_token, kind_of: String, required: true)
   end
 
