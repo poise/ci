@@ -16,7 +16,6 @@
 # limitations under the License.
 #
 
-
 require File.expand_path('../ci_component', __FILE__)
 
 class Chef
@@ -40,7 +39,7 @@ class Chef
     end
 
     def action_disable
-      raise 'Action :disable supported at this time'
+      raise NotImplementedError, 'Action :disable is not supported at this time'
     end
 
     private
