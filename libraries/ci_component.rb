@@ -33,6 +33,7 @@ class Chef
       super
       raise "#{self}: Only one of source or content can be specified" if source && content
       # If source is given, the default cookbook should be the current one
+      # Can't do this with a lazy default because source will always be true after this
       cookbook(source ? cookbook_name : 'ci')
       # If neither source nor content are given, fill in a default
       source("#{plugin}.xml.erb") if !source && !content
