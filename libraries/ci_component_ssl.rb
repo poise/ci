@@ -52,6 +52,9 @@ class Chef
   class Provider::CiComponentSsl < Provider::CiComponent
     def action_enable
       converge_by("install SSL support for CI server #{new_resource.parent.name}") do
+        # Used when computing search-based server URL on the builders
+        node.override['ci']['is_server_ssl'] = true
+        node.override['ci']['server_port'] = 443 # This doesn't account for a custom template changing the SSL port
         notifying_block do
           create_ssl_dir
           create_certs_dir

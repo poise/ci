@@ -58,9 +58,9 @@ class Chef
 
     def search_for_server
       raise "Please specify a server URL via node['ci']['server_url']" if Chef::Config[:solo]
-      server = partial_search(:node, 'ci_is_server:true', rows: 1, keys: {ip: ['ipaddress'], local_ipv4: ['cloud', 'local_ipv4']}).first.first
+      server = partial_search(:node, 'ci_is_server:true', rows: 1, keys: {ip: ['ipaddress'], local_ipv4: ['cloud', 'local_ipv4'], is_ssl: ['ci', 'is_server_ssl'], port: ['ci', 'server_port']}).first.first
       raise "Unable to find Jenkins server via search" unless server
-      "http://#{server['local_ipv4'] || server['ip']}:8080/"
+      "#{server['is_ssl'] ? 'https' : 'http'}://#{server['local_ipv4'] || server['ip']}:#{server['port']}/"
     end
 
   end

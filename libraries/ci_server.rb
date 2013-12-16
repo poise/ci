@@ -41,8 +41,9 @@ class Chef
     include Ci::SshHelper::Provider
 
     def action_install
-      # Force server tag to true
+      # Used when computing search-based server URL on the builders
       node.override['ci']['is_server'] = true
+      node.override['ci']['server_port'] = new_resource.port
       super
     end
 
