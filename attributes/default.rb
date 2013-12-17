@@ -23,6 +23,7 @@ default['ci']['repository'] = nil
 default['ci']['is_server'] = false
 default['ci']['is_builder'] = true
 default['ci']['path'] = '/srv/ci'
+default['ci']['server_hostname'] = nil # node['fqdn']
 default['ci']['server_username'] = 'jnlp'
 default['ci']['server_api_key'] = nil
 

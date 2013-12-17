@@ -26,7 +26,7 @@ class Chef
     # attribute(:cookbook, kind_of: [String, Symbol])
     # attribute(:content, kind_of: String)
     # attribute(:options, option_collector: true)
-    attribute(:hostname, kind_of: String)
+    attribute(:hostname, kind_of: String, default: lazy { node['ci']['server_hostname'] || node['fqdn'] })
 
     def ssl_dir
       ::File.join(parent.path, 'ssl')
