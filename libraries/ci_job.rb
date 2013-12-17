@@ -135,7 +135,7 @@ class Chef
     end
 
     def create_node
-      jenkins_node new_resource.job_name do
+      jenkins_node node.name do
         parent new_resource.parent
         path new_resource.path
         server_url new_resource.server_url
