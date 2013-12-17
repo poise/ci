@@ -22,6 +22,7 @@ class Chef
   class Resource::CiComponentSsl < Resource::CiComponent
     attribute(:certificate, kind_of: String, required: true)
     attribute(:key, kind_of: String, required: true)
+    # Conflicts with CiComponent#after_created's default values
     # attribute(:source, kind_of: String)
     # attribute(:cookbook, kind_of: [String, Symbol])
     # attribute(:content, kind_of: String)
