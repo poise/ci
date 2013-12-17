@@ -48,7 +48,7 @@ class Chef
       raise Exceptions::ValidationFailed, 'Required argument repository is missing!' unless repository
 
       # If source is given, the default cookbook should be the current one
-      cookbook(source ? cookbook_name : 'ci')
+      cookbook(source ? cookbook_name : 'ci') unless cookbook
       # If neither source nor content are given, fill in a default
       source('job-config.xml.erb') if !source && !content
 
