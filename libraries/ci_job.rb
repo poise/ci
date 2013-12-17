@@ -31,6 +31,9 @@ class Chef
     attribute(:content, kind_of: String)
 
     attribute(:repository, kind_of: String, default: lazy { node['ci']['repository'] })
+    attribute(:builder_label, kind_of: [String, FalseClass], default: lazy { job_name })
+    attribute(:command, kind_of: String, required: true)
+
     attribute(:server_url, kind_of: String, default: lazy { node['ci']['server_url'] || search_for_server })
     attribute(:server_username, kind_of: String, default: lazy { node['ci']['server_username'] })
     attribute(:server_api_key, kind_of: String, default: lazy { node['ci']['server_api_key'] })
@@ -120,6 +123,8 @@ class Chef
         parent new_resource.parent
         options do
           repository new_resource.repository
+          command new_resource.command
+          builder_label new_resource.builder_label if new_resource.builder_label
         end
       end
     end
@@ -138,6 +143,7 @@ class Chef
       jenkins_node node.name do
         parent new_resource.parent
         path new_resource.path
+        labels [new_resource.builder_label] if new_resource.builder_label
         server_url new_resource.server_url
         server_username new_resource.server_username
         server_password new_resource.server_api_key
