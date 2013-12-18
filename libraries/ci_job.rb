@@ -16,6 +16,8 @@
 # limitations under the License.
 #
 
+require 'rexml/text' # For #normalize
+
 require File.expand_path('../ci_deploy_key', __FILE__)
 
 class Chef
@@ -123,7 +125,7 @@ class Chef
         parent new_resource.parent
         options do
           repository new_resource.repository
-          command new_resource.command
+          command REXML::Text.normalize(new_resource.command)
           builder_label new_resource.builder_label if new_resource.builder_label
         end
       end
