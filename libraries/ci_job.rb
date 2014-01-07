@@ -40,6 +40,9 @@ class Chef
     attribute(:server_username, kind_of: String, default: lazy { node['ci']['server_username'] })
     attribute(:server_api_key, kind_of: String, default: lazy { node['ci']['server_api_key'] })
     attribute(:is_builder, equal_to: [true, false], default: lazy { node['ci']['is_builder'] })
+    attribute(:downstream_triggers, kind_of: Array, default: {})
+    attribute(:downstream_joins, kind_of: Array, default: {})
+
     def builder_recipe(arg=nil, &block)
       set_or_return(:builder_recipe, arg || block, kind_of: [String, Proc], default: node['ci']['builder_recipe'])
     end
@@ -127,6 +130,8 @@ class Chef
           repository new_resource.repository
           command REXML::Text.normalize(new_resource.command)
           builder_label new_resource.builder_label if new_resource.builder_label
+          downstream_triggers new_resource.downstream_triggers
+          downstream_joins new_resource.downstream_joins
         end
       end
     end
