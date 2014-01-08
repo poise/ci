@@ -24,20 +24,7 @@ class Chef
     actions(:enable, :disable)
 
     attribute(:plugin, kind_of: String, default: lazy { name.split('::').last })
-    attribute(:source, kind_of: String)
-    attribute(:cookbook, kind_of: [String, Symbol])
-    attribute(:content, kind_of: String)
-    attribute(:options, option_collector: true)
-
-    def after_created
-      super
-      raise "#{self}: Only one of source or content can be specified" if source && content
-      # If source is given, the default cookbook should be the current one
-      # Can't do this with a lazy default because source will always be true after this
-      cookbook(source ? cookbook_name : 'ci')
-      # If neither source nor content are given, fill in a default
-      source("#{plugin}.xml.erb") if !source && !content
-    end
+    attribute('', template: true, default_source: lazy { "#{plugin}.xml.erb" })
   end
 
   class Provider::CiComponent < Provider
@@ -67,11 +54,8 @@ class Chef
 
     def enable_config
       jenkins_config new_resource.plugin do
-        source new_resource.source
-        cookbook new_resource.cookbook
         content new_resource.content
         parent new_resource.parent
-        options new_resource.options.merge(component: new_resource)
       end
     end
 

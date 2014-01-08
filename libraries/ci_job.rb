@@ -18,7 +18,7 @@
 
 require 'rexml/text' # For #normalize
 
-require File.expand_path('../ci_deploy_key', __FILE__)
+require File.expand_path('../ci_server', __FILE__)
 
 class Chef
   class Resource::CiJob < Resource
@@ -28,13 +28,13 @@ class Chef
 
     attribute(:job_name, kind_of: String, default: lazy { name.split('::').last })
     attribute(:path, kind_of: String, default: lazy { node['ci']['path'] })
-    attribute(:source, kind_of: String)
-    attribute(:cookbook, kind_of: [String, Symbol])
-    attribute(:content, kind_of: String)
+    attribute('', template: true, default_source: 'job-config.xml.erb', default_options: lazy { default_options })
 
-    attribute(:repository, kind_of: String, default: lazy { node['ci']['repository'] })
+    attribute(:repository, kind_of: String, default: lazy { node['ci']['repository'] }, required: true)
     attribute(:builder_label, kind_of: [String, FalseClass], default: lazy { job_name })
     attribute(:command, kind_of: String, required: true)
+    attribute(:downstream_trigger, kind_of: [String, Array])
+    attribute(:downstream_join, kind_of: [String, Array])
 
     attribute(:server_url, kind_of: String, default: lazy { node['ci']['server_url'] || search_for_server })
     attribute(:server_username, kind_of: String, default: lazy { node['ci']['server_username'] })
@@ -46,14 +46,6 @@ class Chef
 
     def after_created
       super
-      raise "#{self}: Only one of source or content can be specified" if source && content
-      raise Exceptions::ValidationFailed, 'Required argument repository is missing!' unless repository
-
-      # If source is given, the default cookbook should be the current one
-      cookbook(source ? cookbook_name : 'ci') unless cookbook
-      # If neither source nor content are given, fill in a default
-      source('job-config.xml.erb') if !source && !content
-
       # Interpolate the job name into a few attributes to make life easier
       %w{repository builder_recipe}.each do |key|
         val = send(key)
@@ -66,6 +58,24 @@ class Chef
       server = partial_search(:node, 'ci_is_server:true', rows: 1, keys: {ip: ['ipaddress'], local_ipv4: ['cloud', 'local_ipv4'], is_ssl: ['ci', 'is_server_ssl'], port: ['ci', 'server_port']}).first.first
       raise "Unable to find Jenkins server via search" unless server
       "#{server['is_ssl'] ? 'https' : 'http'}://#{server['local_ipv4'] || server['ip']}:#{server['port']}/"
+    end
+
+    private
+
+    def default_options
+      options = {
+        repository: repository,
+        command: REXML::Text.normalize(command),
+        cobertura: true,
+        junit: true,
+        violations: true,
+        clone_workspace: true,
+        mailer: true,
+        build_trigger: {triggers: downstream_trigger},
+        join_trigger: {triggers: downstream_join},
+      }
+      options[:builder_label] = builder_label if builder_label
+      options
     end
 
   end
@@ -119,15 +129,8 @@ class Chef
 
     def create_job
       jenkins_job new_resource.job_name do
-        source new_resource.source
-        cookbook new_resource.cookbook
-        content new_resource.content
         parent new_resource.parent
-        options do
-          repository new_resource.repository
-          command REXML::Text.normalize(new_resource.command)
-          builder_label new_resource.builder_label if new_resource.builder_label
-        end
+        content new_resource.content
       end
     end
 
