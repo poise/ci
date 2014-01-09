@@ -32,9 +32,11 @@ class Chef
     attribute(:cookbook, kind_of: [String, Symbol])
     attribute(:content, kind_of: String)
 
-    attribute(:repository, kind_of: String, default: lazy { node['ci']['repository'] })
-    attribute(:builder_label, kind_of: [String, FalseClass], default: lazy { job_name })
-    attribute(:command, kind_of: String, required: true)
+    attribute(:repository, kind_of: String, default: nil)
+    attribute(:project_url, kind_of: String)
+    attribute(:branch, kind_of: String, default: "ci-test")
+    attribute(:builder_label, kind_of: [String, FalseClass], default: nil)
+    attribute(:command, kind_of: String, required: true) 
 
     attribute(:server_url, kind_of: String, default: lazy { node['ci']['server_url'] || search_for_server })
     attribute(:server_username, kind_of: String, default: lazy { node['ci']['server_username'] })
@@ -42,6 +44,14 @@ class Chef
     attribute(:is_builder, equal_to: [true, false], default: lazy { node['ci']['is_builder'] })
     attribute(:downstream_triggers, kind_of: Array, default: {})
     attribute(:downstream_joins, kind_of: Array, default: {})
+      
+    attribute(:cobertura, kind_of: Hash, default: nil)
+    attribute(:mailer, kind_of: Hash, default: nil)
+    attribute(:junit, kind_of: Hash, default: nil)
+    attribute(:violations, kind_of: Hash, default: nil)
+    attribute(:inherit, kind_of: String, default: nil)
+    attribute(:clone_workspace, kind_of: Hash, default: nil)
+
 
     def builder_recipe(arg=nil, &block)
       set_or_return(:builder_recipe, arg || block, kind_of: [String, Proc], default: node['ci']['builder_recipe'])
@@ -50,7 +60,7 @@ class Chef
     def after_created
       super
       raise "#{self}: Only one of source or content can be specified" if source && content
-      raise Exceptions::ValidationFailed, 'Required argument repository is missing!' unless repository
+#      raise Exceptions::ValidationFailed, 'Required argument repository is missing!' unless repository
 
       # If source is given, the default cookbook should be the current one
       cookbook(source ? cookbook_name : 'ci') unless cookbook
@@ -132,6 +142,14 @@ class Chef
           builder_label new_resource.builder_label if new_resource.builder_label
           downstream_triggers new_resource.downstream_triggers
           downstream_joins new_resource.downstream_joins
+          project_url new_resource.project_url
+          branch new_resource.branch
+          cobertura new_resource.cobertura
+          mailer new_resource.mailer
+          junit new_resource.junit
+          violations new_resource.violations
+          inherit new_resource.inherit
+          clone_workspace new_resource.clone_workspace
         end
       end
     end

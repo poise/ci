@@ -21,6 +21,8 @@ site :opscode
 
 metadata
 
+cookbook 'jenkins', path: '../jenkins'
+
 group :test do
   cookbook 'apt'
 end
