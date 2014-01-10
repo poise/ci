@@ -127,8 +127,8 @@ class Chef
 
         ssl_enabled true
         ssl_redirect_http true
-        cert_path new_resource.cert_path
-        key_path new_resource.key_path
+        ssl_cert_path new_resource.cert_path
+        ssl_key_path new_resource.key_path
       end
     end
   end
