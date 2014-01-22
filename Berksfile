@@ -16,8 +16,7 @@
 # limitations under the License.
 #
 
-chef_api :config
-site :opscode
+source 'https://berks.vandelay.io/'
 
 metadata
 
