@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "ci": {
-      "locked_version": "1.0.14",
+      "locked_version": "1.0.15",
       "path": "."
     },
     "apt": {
@@ -39,6 +39,9 @@
     },
     "yum-epel": {
       "locked_version": "0.2.0"
+    },
+    "chef_handler": {
+      "locked_version": "1.1.4"
     }
   }
 }
