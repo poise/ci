@@ -5,8 +5,3 @@ Host <%= hostname %>
     IdentityFile <%= File.join(@ssh_base_path, key.name) %>
     <%- end -%>
 <% end -%>
-
-
-Host balanced-ci-01
-    ProxyCommand ssh pooper@50.18.199.26 nc %h %p
-    Hostname 10.3.10.10
