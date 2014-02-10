@@ -94,10 +94,12 @@ class Chef
       end
       if new_resource.is_builder
         converge_by("install builder for #{new_resource.job_name}") do
+          notifying_block do
+            create_node
+            create_ssh_dir
+            manage_ssh
+          end
           install_builder_recipe
-          create_node
-          create_ssh_dir
-          manage_ssh
         end
       end
     end
@@ -112,7 +114,9 @@ class Chef
       end
       if new_resource.is_builder
         converge_by("remove builder for #{new_resource.job_name}") do
-          delete_node
+          notifying_block do
+            delete_node
+          end
         end
       end
     end
