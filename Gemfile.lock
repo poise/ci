@@ -1,8 +1,8 @@
 GIT
   remote: git://github.com/berkshelf/berkshelf.git
-  revision: dc1638c979ded01123d3c0669118f00a96fb1cbf
+  revision: f7cc7761351ad4f9f3957d834f2cdb62dc90679b
   specs:
-    berkshelf (3.0.0.beta5)
+    berkshelf (3.0.0.beta7)
       addressable (~> 2.3.4)
       berkshelf-api-client (~> 1.1)
       buff-config (~> 0.2)
@@ -134,7 +134,7 @@ GEM
     moneta (0.6.0)
     multi_json (1.8.4)
     multipart-post (1.2.0)
-    net-http-persistent (2.9.1)
+    net-http-persistent (2.9.4)
     net-scp (1.1.2)
       net-ssh (>= 2.6.5)
     net-ssh (2.7.0)
@@ -145,7 +145,7 @@ GEM
       net-ssh-gateway (>= 1.2.0)
     nio4r (1.0.0)
     nokogiri (1.5.11)
-    octokit (2.7.0)
+    octokit (2.7.1)
       sawyer (~> 0.5.2)
     ohai (6.20.0)
       ipaddress
@@ -166,8 +166,8 @@ GEM
     rake (10.1.1)
     rest-client (1.6.7)
       mime-types (>= 1.16)
-    retryable (1.3.4)
-    ridley (2.4.1)
+    retryable (1.3.5)
+    ridley (2.5.1)
       addressable
       buff-config (~> 0.2)
       buff-extensions (~> 0.3)
