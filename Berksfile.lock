@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "ci": {
-      "locked_version": "1.0.15",
+      "locked_version": "1.0.18",
       "path": "."
     },
     "apt": {
