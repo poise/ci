@@ -16,14 +16,6 @@
 # limitations under the License.
 #
 
-include_recipe 'jenkins::server'
-include_recipe 'jenkins::proxy'
-
-jenkins_plugin 'openid'
-
-template "#{node['jenkins']['server']['home']}/config.xml" do
-  owner 'root'
-  group 'root'
-  mode '644'
-  source 'config.xml.erb'
+ci_server 'jenkins' do
+  path '/var/lib/jenkins'
 end

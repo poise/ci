@@ -1,7 +1,7 @@
 #
 # Author:: Noah Kantrowitz <noah@coderanger.net>
 #
-# Copyright 2013, Balanced, Inc.
+# Copyright 2014, Balanced, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,11 +16,15 @@
 # limitations under the License.
 #
 
-source 'https://berks.vandelay.io/'
-
-metadata
-
-group :test do
-  cookbook 'apt'
-  cookbook 'ci_test', path: 'test/cookbooks/ci_test'
+ci_server 'teapot' do
+  path '/var/lib/jenkins'
+  component 'git'
+  component 'google_auth' do
+    domain 'example.com'
+  end
+  component 'secure_slaves' do
+    master_key 'MASTERKEY'
+    secrets_key 'SECRETSKEY'
+    encrypted_api_token 'TOKEN'
+  end
 end

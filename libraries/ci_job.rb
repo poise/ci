@@ -39,6 +39,7 @@ class Chef
     attribute(:server_url, kind_of: String, default: lazy { node['ci']['server_url'] || search_for_server })
     attribute(:server_username, kind_of: String, default: lazy { node['ci']['server_username'] })
     attribute(:server_api_key, kind_of: String, default: lazy { node['ci']['server_api_key'] })
+    attribute(:is_server, equal_to: [true, false], default: lazy { node['ci']['is_server'] })
     attribute(:is_builder, equal_to: [true, false], default: lazy { node['ci']['is_builder'] })
     def builder_recipe(arg=nil, &block)
       set_or_return(:builder_recipe, arg || block, kind_of: [String, Proc], default: node['ci']['builder_recipe'])
@@ -85,7 +86,7 @@ class Chef
     include Ci::SshHelper::Provider
 
     def action_enable
-      if new_resource.parent
+      if new_resource.is_server
         converge_by("create jenkins job #{new_resource.job_name}") do
           notifying_block do
             create_job
@@ -95,7 +96,7 @@ class Chef
       if new_resource.is_builder
         converge_by("install builder for #{new_resource.job_name}") do
           notifying_block do
-            create_node
+            create_node(:install)
             create_ssh_dir
             manage_ssh
           end
@@ -105,7 +106,7 @@ class Chef
     end
 
     def action_disable
-      if new_resource.parent
+      if new_resource.is_server
         converge_by("disable jenkins job #{new_resource.job_name}") do
           notifying_block do
             disable_job

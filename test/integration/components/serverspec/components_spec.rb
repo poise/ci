@@ -1,7 +1,7 @@
 #
 # Author:: Noah Kantrowitz <noah@coderanger.net>
 #
-# Copyright 2013, Balanced, Inc.
+# Copyright 2014, Balanced, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,11 +16,18 @@
 # limitations under the License.
 #
 
-source 'https://berks.vandelay.io/'
+require 'serverspec'
+include Serverspec::Helper::Exec
+include Serverspec::Helper::DetectOS
 
-metadata
+describe 'Basics' do
+  describe port(8080) do
+    it { should be_listening }
+  end
+end
 
-group :test do
-  cookbook 'apt'
-  cookbook 'ci_test', path: 'test/cookbooks/ci_test'
+describe 'Google Auth' do
+  describe file('/var/lib/jenkins/config.xml') do
+    its(:content) { should include('<endpoint>https://www.google.com/accounts/o8/site-xrds?hd=example.com</endpoint>') }
+  end
 end
