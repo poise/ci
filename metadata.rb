@@ -17,7 +17,7 @@
 #
 
 name 'ci'
-version '1.0.19'
+version '1.0.20'
 
 maintainer 'Noah Kantrowitz'
 maintainer_email 'noah@coderanger.net'
@@ -25,7 +25,7 @@ license 'Apache 2.0'
 description 'Installs and configures CI server & slaves'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
 
-depends 'jenkins', '~> 99.1.6'
+depends 'jenkins', '~> 99.1.12'
 depends 'git'
 depends 'partial_search'
-depends 'poise', '~> 1.0.0'
+depends 'poise', '~> 1.0'
