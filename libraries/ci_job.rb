@@ -96,7 +96,7 @@ class Chef
       if new_resource.is_builder
         converge_by("install builder for #{new_resource.job_name}") do
           notifying_block do
-            create_node(:install)
+            create_node
             create_ssh_dir
             manage_ssh
           end
