@@ -23,8 +23,27 @@ class Chef
     attribute(:access_token, kind_of: String, required: true)
     attribute(:admin_list, kind_of: Array, default: [])
     attribute(:cron, kind_of: String, default: '*/5 * * * *')
+
+    def config_path
+      ::File.join(parent.path, 'org.jenkinsci.plugins.ghprb.GhprbTrigger.xml')
+    end
   end
 
   class Provider::CiComponentGhprb < Provider::CiComponent
+
+    def enable_config
+      file new_resource.config_path do
+        content new_resource.content
+        owner new_resource.parent.user
+        group new_resource.parent.group
+        mode '600'
+      end
+    end
+
+    def disable_config
+      file new_resource.config_path do
+        action :delete
+      end
+    end
   end
 end
