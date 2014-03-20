@@ -30,12 +30,6 @@ class Chef
   end
 
   class Provider::CiComponentGhprb < Provider::CiComponent
-    def install_plugin
-      jenkins_plugin 'ghprb' do
-        parent new_resource.parent
-      end
-    end
-
     def enable_config
       file new_resource.config_path do
         content new_resource.content
