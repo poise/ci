@@ -19,9 +19,12 @@
 require File.expand_path('../ci_component', __FILE__)
 
 class Chef
-  class Resource::CiComponentGHPRB < Resource::CiComponent
+  class Resource::CiComponentGhprb < Resource::CiComponent
     attribute(:access_token, kind_of: String, required: true)
     attribute(:admin_list, kind_of: Array, default: [])
     attribute(:cron, kind_of: String, default: '*/5 * * * *')
+  end
+
+  class Provider::CiComponentGhprb < Provider::CiComponent
   end
 end
