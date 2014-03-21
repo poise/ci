@@ -10,7 +10,7 @@ GRAPH
   apt (2.3.8)
   build-essential (2.0.0)
   chef_handler (1.1.5)
-  ci (1.0.21)
+  ci (1.0.22)
     git (>= 0.0.0)
     jenkins (~> 99.1.12)
     partial_search (>= 0.0.0)

@@ -17,7 +17,7 @@
 #
 
 name 'ci'
-version '1.0.21'
+version '1.0.22'
 
 maintainer 'Noah Kantrowitz'
 maintainer_email 'noah@coderanger.net'
